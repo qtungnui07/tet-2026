@@ -1,6 +1,5 @@
 @font-face {
   font-family: 'y2026';
-  /* src: url('./assets/fonts/Wonderful\ Snowflake.otf') format('truetype'); */
   src: url('./assets/fonts/Veneer.ttf') format('truetype');
 }
 
@@ -31,41 +30,22 @@ body {
   position: relative;
 }
 
-/* .year {
-  font-family: 'y2026', sans-serif;
-  font-size: 19rem; 
-  font-weight: bold;
-  margin: 0;
-  line-height: 1; 
-  color: #ffcc00; 
-  text-shadow: 0 0 20px rgba(255, 204, 0, 0.5); 
-}
 
-.greeting {
-  font-family: 'FontHappy', serif; 
-  font-size: 8rem;
-  margin: 0;
-  color: #F6E7BC; 
-  letter-spacing: 5px; 
-} */
-
-
-/* Hộp chứa chung */
 .title-wrapper {
   position: relative; /* Làm mốc để căn chỉnh các con bên trong */
   display: flex;
   justify-content: center;
   align-items: center;
+  perspective: 1000px;
 }
-
-/* Số 2026 (Nền to phía sau) */
 .year {
   font-family: 'y2026', sans-serif;
-  font-size: 20rem; /* Tăng kích thước lên cho hoành tráng */
+  font-size: 20rem;
   margin: 0;
   color: #f2c641; 
-  z-index: 1; /* Nằm ở lớp dưới */
+  z-index: 1;
   line-height: 1;
+  text-shadow: 0 0 30px rgba(242, 198, 65, 0.5);
 }
 
 .greeting {
@@ -79,20 +59,4 @@ body {
   color: #fff; 
   white-space: nowrap; 
   text-shadow: 2px 2px 9px rgba(0, 0, 0, 0.8); 
-}
-
-
-@keyframes glowFade {
-  0% {
-    text-shadow: 0 0 10px rgba(242, 198, 65, 0.2);
-  }
-  50% {
-    text-shadow: 
-      0 0 20px rgba(242, 198, 65, 0.8),   /* Lớp trong sáng rõ */
-      0 0 50px rgba(242, 198, 65, 0.5),   /* Lớp giữa tỏa ra */
-      0 0 100px rgba(242, 198, 65, 0.3);  /* Lớp ngoài cùng mờ ảo */
-  }
-  100% {
-    text-shadow: 0 0 10px rgba(242, 198, 65, 0.2);
-  }
 }

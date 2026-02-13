@@ -25,7 +25,7 @@ function App() {
         rotateX: -90,
         opacity: 0,
         duration: 1,
-        stagger: 0.05,    // Chữ dài nên cho stagger nhanh hơn chút
+        stagger: 0.02,    // Chữ dài nên cho stagger nhanh hơn chút
         delay: 0.5,       // Đợi số 2026 chạy được 1 nửa mới bắt đầu
         ease: "power3.out"
       });

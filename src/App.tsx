@@ -79,8 +79,8 @@ function App() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.from(".year .char", { y: 100, rotateX: -90, opacity: 0, duration: 1, stagger: 0.1, ease: "back.out(1.7)" });
-      gsap.from(".greeting .char", { y: 50, rotateX: -90, opacity: 0, duration: 1, stagger: 0.05, delay: 0.5, ease: "power3.out" });
+      gsap.from(".year .char", { y: 100, rotateX: -90, opacity: 0, duration: 1, stagger: 0.2, ease: "back.out(1.7)" });
+      gsap.from(".greeting .char", { y: 50, rotateX: -90, opacity: 0, duration: 1, stagger: 0.02, delay: 0.5, ease: "power3.out" });
       gsap.from(".timer-container", { y: 50, opacity: 0, duration: 1, delay: 1.5, ease: "power2.out" });
     }, containerRef);
     return () => ctx.revert();

@@ -1,6 +1,6 @@
 @font-face {
   font-family: 'y2026';
-  src: url('./assets/fonts/Wonderful\ Snowflake.otf') format('truetype');
+  src: url('./assets/fonts/Veneer.ttf') format('truetype');
 }
 
 @font-face {
@@ -14,14 +14,14 @@
 }
 
 body {
-  background-color: #0f0f1f; /* Màu nền tối (xanh đen) */
-  color: white; /* Chữ màu trắng */
+  background: radial-gradient(circle, #4a0e0e 0%, #1a0202 100%);
+  color: white;
   margin: 0;
-  height: 100vh; /* Chiều cao bằng 100% màn hình */
+  height: 100vh; 
   display: flex;
-  justify-content: center; /* Căn giữa ngang */
-  align-items: center; /* Căn giữa dọc */
-  overflow: hidden; /* Ẩn thanh cuộn */
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
 }
 
 .container {
@@ -30,20 +30,33 @@ body {
   position: relative;
 }
 
+
+.title-wrapper {
+  position: relative; /* Làm mốc để căn chỉnh các con bên trong */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1000px;
+}
 .year {
   font-family: 'y2026', sans-serif;
-  font-size: 12rem; 
-  font-weight: bold;
+  font-size: 20rem;
   margin: 0;
-  line-height: 1; 
-  color: #ffcc00; 
-  text-shadow: 0 0 20px rgba(255, 204, 0, 0.5); 
+  color: #f2c641; 
+  z-index: 1;
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(242, 198, 65, 0.5);
 }
 
 .greeting {
-  font-family: 'FontHappy', serif; 
-  font-size: 4rem;
-  margin: 0;
-  color: #F6E7BC; 
-  letter-spacing: 5px; 
+  font-family: 'FontHappy', cursive;
+  position: absolute;
+  z-index: 2; 
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); 
+  font-size: 7rem; 
+  color: #fff; 
+  white-space: nowrap; 
+  text-shadow: 2px 2px 9px rgba(0, 0, 0, 0.8); 
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import './Timer.css'
 
 function getTime(): number[] {
   let new_date = new Date();
@@ -29,9 +30,10 @@ function Timer() {
   const [timeLeft, setTimeLeft] = useState<number[]>(getTime());
 
   useEffect(() => {
-    setInterval(() => {
+    const intervalId = setInterval(() => {
       setTimeLeft(timeLeft => getTime());
     }, 1000);
+    return () => clearInterval(intervalId);
   }, []);
   // return <h1> {days} {hours} {minutes} {seconds}
   return <table className="timer">

@@ -1,0 +1,38 @@
+table.timer {
+  font-family: Impact, Charcoal, sans-serif;
+  width: 50%;
+  height: 25%;
+  text-align: center;
+  border-collapse: collapse;
+}
+table.timer td, table.timer th {
+  border: 0px solid #555555;
+  padding: 5px 2px;
+}
+table.timer tbody td {
+  font-size: 30px;
+  font-weight: bold;
+  color: #FFFFFF;
+}
+table.timer thead {
+  }
+table.timer thead th {
+  font-size: 38px;
+  font-weight: bold;
+  color: #FFFFFF;
+  text-align: center;
+  padding: 0px 10px;
+}
+table.timer tfoot td {
+  font-size: 13px;
+}
+table.timer tfoot .links {
+  text-align: right;
+}
+table.timer tfoot .links a{
+  display: inline-block;
+  background: #792396;
+  color: #FFFFFF;
+  padding: 2px 8px;
+  border-radius: 5px;
+}

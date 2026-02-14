@@ -26,15 +26,32 @@ function getTime(): number[] {
 }
 
 function Timer() {
-  const [count, setCount] = useState(0);
+  const [timeLeft, setTimeLeft] = useState<number[]>(getTime());
 
   useEffect(() => {
-    setTimeout(() => {
-      setCount((count) => count + 1);
+    setInterval(() => {
+      setTimeLeft(timeLeft => getTime());
     }, 1000);
   }, []);
   // return <h1> {days} {hours} {minutes} {seconds}
-  return <h1>I've rendered {count} times!</h1>;
+  return <table className="timer">
+  <thead>
+    <tr>
+      <th>DAYS</th>
+      <th>HOURS</th>
+      <th>MINUTES</th>
+      <th>SECONDS</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><center>{timeLeft[0]}</center></td>
+      <td><center>{timeLeft[1]}</center></td>
+      <td><center>{timeLeft[2]}</center></td>
+      <td><center>{timeLeft[3]}</center></td>
+    </tr>
+  </tbody>
+</table>;
 }
 
 export default Timer;

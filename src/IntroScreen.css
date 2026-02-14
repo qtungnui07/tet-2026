@@ -1,0 +1,28 @@
+
+.intro-container {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: transparent;
+  z-index: 9999;
+  display: flex; justify-content: center; align-items: center;
+  color: #f0e6d2;
+}
+.intro-content { display: flex; flex-direction: column; gap: 1rem; }
+.intro-row { display: flex; align-items: center; gap: 15px; }
+.small-text {
+  display: flex; flex-direction: column;
+  font-family: monospace; font-weight: bold; font-size: 1.2rem;
+  text-align: right; color: #fff;
+}
+.big-text {
+  font-family: sans-serif; font-weight: 900; font-size: 6rem;
+  text-transform: uppercase; line-height: 0.8; letter-spacing: -2px;
+  margin: 0; color: #f0e6d2;
+}
+
+/* Căn chỉnh so le */
+.row-1 { align-items: flex-start; }
+.row-1 .small-text { margin-top: 15px; }
+
+.row-2 { align-items: flex-end; margin-left: 4rem; }
+.row-2 .small-text { margin-bottom: 12px; }

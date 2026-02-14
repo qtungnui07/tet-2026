@@ -1,59 +1,62 @@
 import { useState, useEffect } from 'react';
 import './Timer.css'
 
-function getTime(): number[] {
-  let new_date = new Date();
-  let target_date = new Date(2026,2,17,0,0,0,0);
-  let day = target_date.getDate() - new_date.getDate();
-  let hour = target_date.getHours() - new_date.getHours();
-  let minute = target_date.getMinutes() - new_date.getMinutes();
-  let second = target_date.getSeconds() - new_date.getSeconds();
-  if (second<0) {
-      second += 60;
-      minute -= 1;
-    };
-  if (minute<0) {
-    minute += 60;
-    hour -= 1;
-  };
-  if (hour<0) {
-    hour += 24;
-    day -= 1;
-  };
-  if (day<0) {
-    return [0,0,0,0]
-  }
-  return [day,hour,minute,second]
-}
-
-function Timer() {
-  const [timeLeft, setTimeLeft] = useState<number[]>(getTime());
+const Timer = () => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
 
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setTimeLeft(timeLeft => getTime());
+    // Đích đến: 0h00 ngày 17/02/2026
+    const tetDate = new Date('2026-02-17T00:00:00').getTime();
+
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = tetDate - now;
+
+      if (distance < 0) {
+        clearInterval(timer);
+      } else {
+        setTimeLeft({
+          days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+          minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+          seconds: Math.floor((distance % (1000 * 60)) / 1000),
+        });
+      }
     }, 1000);
-    return () => clearInterval(intervalId);
+
+    return () => clearInterval(timer);
   }, []);
-  // return <h1> {days} {hours} {minutes} {seconds}
-  return <table className="timer">
-  <thead>
-    <tr>
-      <th>DAYS</th>
-      <th>HOURS</th>
-      <th>MINUTES</th>
-      <th>SECONDS</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><center>{timeLeft[0]}</center></td>
-      <td><center>{timeLeft[1]}</center></td>
-      <td><center>{timeLeft[2]}</center></td>
-      <td><center>{timeLeft[3]}</center></td>
-    </tr>
-  </tbody>
-</table>;
-}
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+
+  return (
+    <div className="timer-container">
+      <TimeUnit value={pad(timeLeft.days)} label="Ngày" />
+      <TimeUnit value={pad(timeLeft.hours)} label="Giờ" />
+      <TimeUnit value={pad(timeLeft.minutes)} label="Phút" />
+      <TimeUnit value={pad(timeLeft.seconds)} label="Giây" />
+    </div>
+  );
+};
+
+// --- CẬP NHẬT: Component hiển thị từng ô ---
+const TimeUnit = ({ value, label }: { value: string; label: string }) => (
+  <div className="unit-group">
+    {/* 1. Label đưa lên trên */}
+    <div className="time-label">{label}</div>
+    
+    <div className="time-box">
+      {/* 2. Mẹo Animation: key={value} giúp react reset animation mỗi khi số thay đổi */}
+      <div key={value} className="time-value">
+        {value}
+      </div>
+    </div>
+  </div>
+);
 
 export default Timer;

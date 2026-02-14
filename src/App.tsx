@@ -20,7 +20,7 @@ function App() {
         rotateX: -90,
         opacity: 0,
         duration: 1,
-        stagger: 0.1,
+        stagger: 0.2,
         ease: "back.out(1.7)"
       });
 

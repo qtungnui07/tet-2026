@@ -6,6 +6,20 @@ interface IntroScreenProps {
   onComplete: () => void;
 }
 
+const SplitText = ({ text }: { text: string }) => (
+  <>
+    {text.split("").map((char, index) => (
+      <span
+        key={`${char}-${index}`}
+        className="char"
+        style={{ display: "inline-block", minWidth: "10px" }}
+      >
+        {char === " " ? "\u00A0" : char}
+      </span>
+    ))}
+  </>
+);
+
 const IntroScreen = ({ onComplete }: IntroScreenProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -15,43 +29,50 @@ const IntroScreen = ({ onComplete }: IntroScreenProps) => {
 
       tl.to(containerRef.current, { opacity: 1, duration: 0.5 });
 
-      tl.from(".row-1 .small-text-wrapper span", { 
-        y: 40,
-        opacity: 0, 
-        duration: 0.8, 
-        stagger: 0.15,
+      tl.from(".row-1 .small-text-wrapper span", {
+        y: -20,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 0.5,
         ease: "back.out(1.7)"
-      })
-      .from(".row-1 .big-text", { 
-        scale: 0.5,
-        opacity: 0, 
-        duration: 1, 
-        ease: "elastic.out(1, 0.5)"
-      }, "-=0.5");
-
-      tl.from(".row-2 .small-text-wrapper span", { 
-        y: 40, 
-        opacity: 0, 
-        duration: 0.8, 
-        stagger: 0.15,
-        ease: "back.out(1.7)" 
-      }, "-=0.5")
-      .from(".row-2 .big-text", { 
-        scale: 0.5, 
-        opacity: 0, 
-        duration: 1, 
-        ease: "elastic.out(1, 0.5)" 
-      }, "-=0.6");
-
-      tl.to({}, { duration: 3 });
-
-      tl.to(containerRef.current, { 
-        opacity: 0, 
-        scale: 1.1,
-        duration: 0.8, 
-        ease: "power2.in" 
       });
 
+      tl.from(".row-1 .big-text .char", {
+        y: 100,
+        opacity: 0,
+        scale: 0.5,
+        rotation: 10,
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "elastic.out(1, 0.5)"
+      }, "-=0.4");
+
+      tl.from(".row-2 .small-text-wrapper span", {
+        y: -20,
+        opacity: 0,
+        stagger: 0.05,
+        duration: 0.5,
+        ease: "back.out(1.7)"
+      }, "-=0.2");
+
+      tl.from(".row-2 .big-text .char", {
+        y: 100,
+        opacity: 0,
+        scale: 0.5,
+        rotation: -10,
+        stagger: 0.1,
+        duration: 0.8,
+        ease: "elastic.out(1, 0.5)"
+      }, "-=0.4");
+
+      tl.to({}, { duration: 2.5 });
+
+      tl.to(containerRef.current, {
+        opacity: 0,
+        scale: 1.1,
+        duration: 0.8,
+        ease: "power2.in"
+      });
     }, containerRef);
 
     return () => ctx.revert();
@@ -65,7 +86,9 @@ const IntroScreen = ({ onComplete }: IntroScreenProps) => {
             <span>về</span>
             <span>nhà</span>
           </div>
-          <h1 className="big-text fontin">ĂN TẾT</h1>
+          <h1 className="big-text fontin">
+            <SplitText text="ĂN TẾT" />
+          </h1>
         </div>
 
         <div className="row-container row-2">
@@ -74,7 +97,9 @@ const IntroScreen = ({ onComplete }: IntroScreenProps) => {
             <span>hết</span>
             <span>đi</span>
           </div>
-          <h1 className="big-text fontin">ÂU LO</h1>
+          <h1 className="big-text fontin">
+            <SplitText text="ÂU LO" />
+          </h1>
         </div>
       </div>
     </div>

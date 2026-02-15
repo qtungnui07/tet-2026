@@ -13,31 +13,43 @@ const IntroScreen = ({ onComplete }: IntroScreenProps) => {
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({ onComplete: onComplete });
 
-      // 1. Container hiện ra
       tl.to(containerRef.current, { opacity: 1, duration: 0.5 });
 
-      // 2. Animation dòng 1 (Về nhà - Ăn Tết)
-      tl.from(".row-1 .small-text span", { 
-        y: 20, opacity: 0, stagger: 0.1, duration: 0.5, ease: "back.out" 
+      tl.from(".row-1 .small-text-wrapper span", { 
+        y: 40,
+        opacity: 0, 
+        duration: 0.8, 
+        stagger: 0.15,
+        ease: "back.out(1.7)"
       })
       .from(".row-1 .big-text", { 
-        scale: 0.8, opacity: 0, duration: 0.8, ease: "power3.out" 
-      }, "-=0.3");
+        scale: 0.5,
+        opacity: 0, 
+        duration: 1, 
+        ease: "elastic.out(1, 0.5)"
+      }, "-=0.5");
 
-      // 3. Animation dòng 2 (Gạt hết đi - Âu lo)
-      tl.from(".row-2 .small-text span", { 
-        y: 20, opacity: 0, stagger: 0.1, duration: 0.5, ease: "back.out" 
-      }, "-=0.4")
+      tl.from(".row-2 .small-text-wrapper span", { 
+        y: 40, 
+        opacity: 0, 
+        duration: 0.8, 
+        stagger: 0.15,
+        ease: "back.out(1.7)" 
+      }, "-=0.5")
       .from(".row-2 .big-text", { 
-        scale: 0.8, opacity: 0, duration: 0.8, ease: "power3.out" 
-      }, "-=0.3");
+        scale: 0.5, 
+        opacity: 0, 
+        duration: 1, 
+        ease: "elastic.out(1, 0.5)" 
+      }, "-=0.6");
 
-      // 4. Dừng lại ngắm
-      tl.to({}, { duration: 2.5 });
+      tl.to({}, { duration: 3 });
 
-      // 5. Biến mất
       tl.to(containerRef.current, { 
-        opacity: 0, duration: 0.8, ease: "power2.in" 
+        opacity: 0, 
+        scale: 1.1,
+        duration: 0.8, 
+        ease: "power2.in" 
       });
 
     }, containerRef);
@@ -47,36 +59,23 @@ const IntroScreen = ({ onComplete }: IntroScreenProps) => {
 
   return (
     <div className="intro-container" ref={containerRef}>
-      {/* Sử dụng CSS Grid Container */}
-      <div className="grid-layout">
-        
-        {/* === DÒNG 1 === */}
-        {/* Ô 1: Chữ nhỏ (Căn trên) */}
-        <div className="grid-item small-col row-1 top-aligned">
-          <div className="small-text">
+      <div className="intro-content">
+        <div className="row-container row-1">
+          <div className="small-text-wrapper pos-1 fontin">
             <span>về</span>
             <span>nhà</span>
           </div>
-        </div>
-        {/* Ô 2: Chữ to */}
-        <div className="grid-item big-col row-1">
-          <h1 className="big-text">ĂN TẾT</h1>
+          <h1 className="big-text fontin">ĂN TẾT</h1>
         </div>
 
-        {/* === DÒNG 2 === */}
-        {/* Ô 3: Chữ nhỏ (Căn dưới) */}
-        <div className="grid-item small-col row-2 bottom-aligned">
-          <div className="small-text">
+        <div className="row-container row-2">
+          <div className="small-text-wrapper pos-2 fontin">
             <span>gạt</span>
             <span>hết</span>
             <span>đi</span>
           </div>
+          <h1 className="big-text fontin">ÂU LO</h1>
         </div>
-        {/* Ô 4: Chữ to */}
-        <div className="grid-item big-col row-2">
-          <h1 className="big-text">ÂU LO</h1>
-        </div>
-
       </div>
     </div>
   );

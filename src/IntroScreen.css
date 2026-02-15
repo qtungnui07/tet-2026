@@ -1,28 +1,89 @@
+@font-face {
+  font-family: 'fontintro';
+  src: url(./assets/fonts/DFVN\ Soyuz\ Grotesk\ 2.0.ttf) format('truetype');
+}
+
+.fontin {
+  font-family: 'fontintro', sans-serif;
+}
 
 .intro-container {
   position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: transparent;
+  top: 0; 
+  left: 0; 
+  width: 100vw; 
+  height: 100vh;
   z-index: 9999;
-  display: flex; justify-content: center; align-items: center;
-  color: #f0e6d2;
+  display: flex; 
+  justify-content: center; 
+  align-items: center;
+  opacity: 0;
 }
-.intro-content { display: flex; flex-direction: column; gap: 1rem; }
-.intro-row { display: flex; align-items: center; gap: 15px; }
-.small-text {
-  display: flex; flex-direction: column;
-  font-family: monospace; font-weight: bold; font-size: 1.2rem;
-  text-align: right; color: #fff;
+
+.intro-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.3rem; 
+  transform: scale(1.2);
 }
+
+.row-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .big-text {
-  font-family: sans-serif; font-weight: 900; font-size: 6rem;
-  text-transform: uppercase; line-height: 0.8; letter-spacing: -2px;
-  margin: 0; color: #f0e6d2;
+  font-family: 'fontintro', sans-serif;
+  font-weight: 900;
+  font-size: 15rem; 
+  text-transform: uppercase;
+  line-height: 0.75;
+  letter-spacing: -4px;
+  margin: 0;
+  color: #f0e6d2;
+  position: relative;
+  z-index: 1;
+  text-shadow: 4px 4px 0px rgba(0,0,0,0.3);
 }
 
-/* Căn chỉnh so le */
-.row-1 { align-items: flex-start; }
-.row-1 .small-text { margin-top: 15px; }
+.small-text-wrapper {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  font-family: 'fontintro', monospace;
+  font-weight: bold;
+  font-size: 2.2rem; 
+  color: #f0e6d2;
+  z-index: 2;
+  line-height: 0.9;
+  white-space: nowrap;
+}
 
-.row-2 { align-items: flex-end; margin-left: 4rem; }
-.row-2 .small-text { margin-bottom: 12px; }
+.pos-1 {
+  left: -15%; 
+  top: 25%;
+  text-align: right;
+  transform: rotate(-8deg);
+}
+
+.pos-2 {
+  left: -20%;
+  bottom: 15%;
+  text-align: right;
+  transform: rotate(5deg);
+}
+
+.row-2 {
+  margin-left: 12rem; 
+  margin-top: -2rem;
+}
+
+@media (max-width: 1400px) {
+  .intro-content {
+    transform: scale(0.9);
+  }
+}

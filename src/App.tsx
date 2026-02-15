@@ -3,6 +3,7 @@ import gsap from 'gsap';
 import './App.css';
 import IntroScreen from './IntroScreen';
 import Timer from './Timer';
+import FireworksOverlay from './FireworksOverlay';
 
 interface SplitTextStringProps { text: string; }
 const SplitTextString = ({ text }: SplitTextStringProps) => (
@@ -19,6 +20,7 @@ function App() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [showIntro, setShowIntro] = useState(true);
   const [isFinished, setIsFinished] = useState(false);
+  const [isShooting, setIsShooting] = useState(false);
 
   useEffect(() => {
     if (showIntro) return;
@@ -39,7 +41,10 @@ function App() {
 
   return (
     <>
-      <div className={`cny-bg ${!showIntro ? 'visible' : ''}`}></div>
+      <FireworksOverlay enableControls={true} onStatusChange={setIsShooting} />
+
+      {/* Logic Class: Nếu intro tắt VÀ KHÔNG BẮN PHÁO HOA thì mới hiện background (.visible) */}
+      <div className={`cny-bg ${!showIntro && !isShooting ? 'visible' : ''}`}></div>
 
       {showIntro ? (
         <IntroScreen onComplete={() => setShowIntro(false)} />

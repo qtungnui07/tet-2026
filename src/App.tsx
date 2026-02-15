@@ -39,6 +39,8 @@ function App() {
 
   return (
     <>
+      <div className={`cny-bg ${!showIntro ? 'visible' : ''}`}></div>
+
       {showIntro ? (
         <IntroScreen onComplete={() => setShowIntro(false)} />
       ) : (
@@ -49,7 +51,6 @@ function App() {
               <h2 className="greeting"><SplitTextString text="Happy New Year" /></h2>
             </div>
             {!isFinished && <Timer onComplete={() => setIsFinished(true)} />}
-            
           </div>
         </div>
       )}

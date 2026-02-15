@@ -7,22 +7,42 @@
   font-family: 'FontHappy';
   src: url('./assets/fonts/Handbrake.ttf') format('truetype');
 }
+
 @font-face {
   font-family: 'countdown';
   src: url('./assets/fonts/DFVN-DarumadropOne.ttf') format('truetype');
 }
+
 :root {
   margin: 0; padding: 0; box-sizing: border-box;
 }
 
 body {
   background: radial-gradient(circle, #4a0e0e 0%, #1a0202 100%);
-  background-image: url('/cnybg.jpg');
-  background-size: cover;
   color: white;
   margin: 0; height: 100vh;
   display: flex; justify-content: center; align-items: center;
   overflow: hidden;
+  position: relative;
+}
+
+.cny-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background-image: url('./cnybg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 2.5s ease-in-out;
+}
+
+.cny-bg.visible {
+  opacity: 1;
+  transform: scale(1.02);
+  transition: opacity 2s ease-in-out, transform 10s ease-out;
 }
 
 .container {
@@ -45,6 +65,7 @@ body {
   perspective: 1000px;
   margin-bottom: 2rem;
 }
+
 .year {
   font-family: 'y2026', sans-serif;
   font-size: 15rem;
@@ -66,6 +87,7 @@ body {
   white-space: nowrap;
   text-shadow: 5px 5px 20px rgba(255, 255, 255, 0.6);
 }
+
 .timer-container {
   display: flex;
   gap: 2rem;
@@ -94,11 +116,9 @@ body {
   width: 140px; height: 160px;
   border-radius: 15px;
   border: 2px solid #a52a2a;
-  
   display: flex; justify-content: center; align-items: center;
   overflow: hidden; 
   position: relative;
-  
   box-shadow: 0 15px 30px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.2);
 }
 
@@ -117,6 +137,7 @@ body {
   50% { opacity: 1; }
   100% { opacity: 1; transform: translateY(0); }
 }
+
 @media (max-width: 768px) {
   .year { font-size: 8rem; }
   .greeting { font-size: 3rem; }
@@ -124,4 +145,4 @@ body {
   .time-box { width: 70px; height: 80px; }
   .time-value { font-size: 2.5rem; }
   .time-label { font-size: 0.8rem; }
-} 
+}

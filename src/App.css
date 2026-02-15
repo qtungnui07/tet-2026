@@ -16,7 +16,9 @@
 :root {
   margin: 0; padding: 0; box-sizing: border-box;
 }
-
+*{
+  user-select: none; 
+}
 body {
   background: radial-gradient(circle, #4a0e0e 0%, #1a0202 100%);
   color: white;

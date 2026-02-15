@@ -2,7 +2,9 @@
   font-family: 'fontintro';
   src: url(./assets/fonts/DFVN\ Soyuz\ Grotesk\ 2.0.ttf) format('truetype');
 }
-
+*{
+  user-select: none; 
+}
 .fontin {
   font-family: 'fontintro', sans-serif;
 }

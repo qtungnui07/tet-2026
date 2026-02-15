@@ -41,7 +41,7 @@ function App() {
 
   return (
     <>
-      <FireworksOverlay enableControls={true} onStatusChange={setIsShooting} />
+      <FireworksOverlay enableControls={!showIntro} onStatusChange={setIsShooting} />
 
       {/* Logic Class: Nếu intro tắt VÀ KHÔNG BẮN PHÁO HOA thì mới hiện background (.visible) */}
       <div className={`cny-bg ${!showIntro && !isShooting ? 'visible' : ''}`}></div>

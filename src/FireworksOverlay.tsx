@@ -12,9 +12,9 @@ const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
 // const LUNAR_NEW_YEAR_2026 = new Date(); // Bỏ comment dòng này để test ngay
 
 const FIREWORK_AUDIO_URLS = [
+  "/firework.mp3",
   "/firework1.mp3",
-  "/firework2.mp3",
-  "/firework3.mp3"
+//   "/firework3.mp3"
 ];
 
 const THEME_COLORS = [

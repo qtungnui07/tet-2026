@@ -9,12 +9,12 @@ import React, {
 
 // --- 1. CONFIG & DATA ---
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
-// const LUNAR_NEW_YEAR_2026 = new Date(); // Bỏ comment dòng này để test ngay
+// const LUNAR_NEW_YEAR_2026 = new Date(); // Uncomment để test ngay
 
+// --- CẬP NHẬT ĐÚNG TÊN FILE CỦA BẠN ---
 const FIREWORK_AUDIO_URLS = [
   "/firework.mp3",
-  "/firework1.mp3",
-//   "/firework3.mp3"
+  "/firework1.mp3"
 ];
 
 const THEME_COLORS = [
@@ -42,7 +42,7 @@ const isMainEvent = (date: Date) => {
 };
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
-// --- 2. CONTROLS COMPONENT (CÓ ANIMATION TRƯỢT LÊN) ---
+// --- 2. CONTROLS COMPONENT ---
 interface ControlsProps {
   onLaunch: (type: FireworkType) => void;
   onMix: () => void;
@@ -62,16 +62,14 @@ const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible }) => {
 
   const containerStyle: React.CSSProperties = {
     position: 'fixed', bottom: '30px', left: '50%', 
-    // Animation sẽ ghi đè transform này, nên ta định nghĩa trong keyframes luôn
     transform: 'translateX(-50%)', 
     zIndex: 9999, display: 'flex', gap: '8px',
     padding: '10px 15px', borderRadius: '30px',
     background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(5px)',
     border: '1px solid rgba(255, 215, 0, 0.2)',
-    
-    // --- ANIMATION TRƯỢT LÊN ---
+    // Animation trượt lên
     animation: 'slideUpControl 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-    opacity: 0 // Bắt đầu ẩn để animation xử lý
+    opacity: 0
   };
 
   const types: FireworkType[] = ["sphere", "ring", "star", "heart", "willow", "strobe"];
@@ -90,20 +88,12 @@ const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible }) => {
 
   return (
     <>
-      {/* Định nghĩa Keyframes ngay trong component */}
       <style>{`
         @keyframes slideUpControl {
-          0% {
-            transform: translate(-50%, 100px); /* Bắt đầu ở dưới đáy */
-            opacity: 0;
-          }
-          100% {
-            transform: translate(-50%, 0); /* Trượt lên vị trí chuẩn */
-            opacity: 1;
-          }
+          0% { transform: translate(-50%, 100px); opacity: 0; }
+          100% { transform: translate(-50%, 0); opacity: 1; }
         }
       `}</style>
-      
       <div style={containerStyle}>
         {types.map((type) => (
           <button key={type} onClick={() => onLaunch(type)} style={btnStyle} title={type}>{getIcon(type)}</button>
@@ -131,6 +121,12 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const stopTimerRef = useRef<number | null>(null);
     const isActiveRef = useRef(false);
 
+    // --- FIX LỖI STALE CLOSURE: Dùng Ref để theo dõi trạng thái audioEnabled ---
+    const audioEnabledRef = useRef(audioEnabled);
+    useEffect(() => {
+        audioEnabledRef.current = audioEnabled;
+    }, [audioEnabled]);
+
     useEffect(() => {
       const AC = window.AudioContext || (window as any).webkitAudioContext;
       if (!AC) return;
@@ -143,7 +139,9 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                 buffers.push(audioBuffer);
-            } catch (e) {}
+            } catch (e) {
+                console.warn("Lỗi load nhạc:", url);
+            }
         }
         audioBuffersRef.current = buffers;
       };
@@ -151,10 +149,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       return () => { if (ctx.state !== "closed") ctx.close(); };
     }, []);
 
-    const playSound = () => {
+    const playSound = useCallback(() => {
       const buffers = audioBuffersRef.current;
-      if (!audioEnabled || !audioContextRef.current || buffers.length === 0) return;
-      const ctx = audioContextRef.current; if (ctx.state === "suspended") ctx.resume();
+      // Dùng audioEnabledRef.current thay vì biến audioEnabled trực tiếp
+      if (!audioEnabledRef.current || !audioContextRef.current || buffers.length === 0) return;
+      
+      const ctx = audioContextRef.current;
+      if (ctx.state === "suspended") ctx.resume().catch(() => {});
+
       try {
         const src = ctx.createBufferSource();
         src.buffer = buffers[Math.floor(Math.random() * buffers.length)];
@@ -162,14 +164,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         gain.gain.value = 0.3; src.connect(gain); gain.connect(ctx.destination); src.start(0);
         return { source: src, gainNode: gain };
       } catch (e) { return undefined; }
-    };
+    }, []);
 
-    const markActive = () => {
+    const markActive = useCallback(() => {
       if (stopTimerRef.current) { window.clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
       if (!isActiveRef.current) { isActiveRef.current = true; if (onStatusChange) onStatusChange(true); }
-    };
+    }, [onStatusChange]);
 
-    const createFirework = (w: number, h: number, forcedType?: FireworkType): Firework => {
+    const createFirework = useCallback((w: number, h: number, forcedType?: FireworkType): Firework => {
       const startX = random(w * 0.1, w * 0.9); const targetY = random(h * 0.1, h * 0.5); const audio = playSound();
       let type = forcedType || "sphere";
       if (!forcedType) {
@@ -183,7 +185,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         x: startX, y: h, targetY, vx: (w / 2 - startX) * 0.003 + random(-0.5, 0.5), vy: random(-11, -17),
         color: color, type, particles: [], exploded: false, dead: false, audioSource: audio?.source, audioGain: audio?.gainNode
       };
-    };
+    }, [playSound]);
 
     const createParticles = (x: number, y: number, color: string, type: FireworkType): Particle[] => {
       const particles: Particle[] = [];
@@ -215,6 +217,12 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
 
     const triggerMixSequence = useCallback(() => {
         if (!canvasRef.current) return;
+        
+        // Kích hoạt AudioContext ngay lập tức
+        if (audioContextRef.current && audioContextRef.current.state === "suspended") {
+            audioContextRef.current.resume().catch((e) => console.warn(e));
+        }
+
         const types: FireworkType[] = ["sphere", "ring", "star", "heart", "willow", "strobe"];
         types.forEach((t, i) => {
             setTimeout(() => {
@@ -224,7 +232,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
                 }
             }, i * 250);
         });
-    }, []);
+    }, [createFirework, markActive]); // Đã thêm dependencies để tránh stale closure
 
     // --- AUTO MIX 7S ---
     useEffect(() => {
@@ -285,7 +293,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       };
       loop();
       return () => { window.removeEventListener("resize", resize); cancelAnimationFrame(frameId); };
-    }, [audioEnabled]);
+    }, [audioEnabled, createFirework, createParticles, onStatusChange]); // Dependecies cho useEffect loop
 
     useImperativeHandle(ref, () => ({
       launch: (type: FireworkType) => {

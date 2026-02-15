@@ -8,7 +8,7 @@ import React, {
 
 // --- 1. CONFIG & DATA ---
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
-const FIREWORK_AUDIO_URL = "/firework.mp3"; 
+const FIREWORK_AUDIO_URL = "./firework.mp3"; 
 
 const THEME_COLORS = [
   "#FFD700", "#FF4500", "#FF0000", "#FFA500", "#FFFFFF", "#E6BE8A",

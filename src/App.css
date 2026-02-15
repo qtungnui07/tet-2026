@@ -139,8 +139,8 @@ body {
 }
 
 @media (max-width: 768px) {
-  .year { font-size: 8rem; }
-  .greeting { font-size: 3rem; }
+  .year { font-size: 6rem; }
+  .greeting { font-size: 2.4rem; }
   .timer-container { gap: 10px; }
   .time-box { width: 70px; height: 80px; }
   .time-value { font-size: 2.5rem; }

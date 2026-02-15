@@ -17,6 +17,8 @@
 
 body {
   background: radial-gradient(circle, #4a0e0e 0%, #1a0202 100%);
+  background-image: url('/cnybg.jpg');
+  background-size: cover;
   color: white;
   margin: 0; height: 100vh;
   display: flex; justify-content: center; align-items: center;

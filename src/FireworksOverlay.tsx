@@ -9,7 +9,7 @@ import React, {
 
 // --- 1. CONFIG & DATA ---
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
-const TEST_DATE_2026 = new Date(2026, 1, 16, 8, 4, 0); 
+const TEST_DATE_2026 = new Date(2026, 1, 16, 20, 27, 15); 
 const FIREWORK_AUDIO_URLS = ["/firework.mp3", "/firework1.mp3"];
 const THEME_COLORS = ["#FFD700", "#FF4500", "#FF0000", "#FFA500", "#FFFFFF", "#E6BE8A", "#FF69B4", "#FF1493"];
 
@@ -27,7 +27,7 @@ const isShowTime = (now: Date) => {
 };
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
-// --- 2. CONTROLS (QUAN TRỌNG: CONTAINER CHUNG CHO CẢ 2 THANH) ---
+// --- 2. CONTROLS (QUAN TRỌNG: FIX LỖI AUTOPLAY) ---
 interface ControlsProps {
   onLaunch: (type: FireworkType) => void;
   onMix: () => void;
@@ -36,28 +36,37 @@ interface ControlsProps {
 }
 
 const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible, extraContent }) => {
-  if (!visible) return null;
+  // BỎ DÒNG NÀY: if (!visible) return null; 
+  // Để MusicPlayer luôn được mount và chạy Autoplay
 
   // Style cho Container CHÍNH: Căn giữa, chứa cả 2 thanh
   const mainWrapperStyle: React.CSSProperties = {
     position: 'fixed', bottom: '30px', left: '50%', 
-    transform: 'translateX(-50%)', // Luôn căn giữa màn hình
+    transform: 'translateX(-50%)', 
     zIndex: 9999, 
     display: 'flex', alignItems: 'center', justifyContent: 'center',
-    gap: '20px', // Khoảng cách giữa MusicPlayer và Firework Buttons
-    animation: 'slideUpControl 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
-    opacity: 0,
-    flexWrap: 'wrap', // Tự xuống dòng trên điện thoại bé
+    gap: '20px',
     width: '100%',
-    pointerEvents: 'none' // Để click xuyên qua vùng trống
+    pointerEvents: 'none', // Mặc định không chặn click (để bấm xuyên qua khi ẩn)
+    flexWrap: 'wrap',
   };
 
-  // Style cho phần nút pháo hoa
+  // Style cho phần nút pháo hoa (Ẩn hiện dựa theo visible)
   const fwContainerStyle: React.CSSProperties = {
     display: 'flex', gap: '8px', padding: '6px 15px', borderRadius: '30px',
     background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(5px)',
     border: '1px solid rgba(255, 215, 0, 0.2)', height: '52px', alignItems: 'center',
-    pointerEvents: 'auto'
+    
+    // Logic ẩn hiện riêng cho thanh này
+    opacity: visible ? 1 : 0,
+    pointerEvents: visible ? 'auto' : 'none',
+    transform: visible ? 'translateY(0)' : 'translateY(20px)',
+    transition: 'opacity 0.8s ease, transform 0.8s ease',
+  };
+
+  // Wrapper cho MusicPlayer (Để nhận click)
+  const musicWrapperStyle: React.CSSProperties = {
+    pointerEvents: 'auto', // Luôn cho phép tương tác với nhạc (kể cả khi ẩn giao diện)
   };
 
   const btnStyle: React.CSSProperties = {
@@ -86,12 +95,12 @@ const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible, extraCont
       <style>{`@keyframes slideUpControl { 0% { transform: translate(-50%, 100px); opacity: 0; } 100% { transform: translate(-50%, 0); opacity: 1; } }`}</style>
       
       <div style={mainWrapperStyle}>
-        {/* Thanh Music nằm ở đây */}
-        <div style={{ pointerEvents: 'auto' }}>
+        {/* Thanh Music nằm ở đây - Luôn render để Autoplay chạy */}
+        <div style={musicWrapperStyle}>
             {extraContent}
         </div>
 
-        {/* Thanh Pháo hoa nằm cạnh */}
+        {/* Thanh Pháo hoa nằm cạnh - Sẽ ẩn đi lúc Intro */}
         <div style={fwContainerStyle}>
           {types.map((type) => (
             <button key={type} onClick={() => onLaunch(type)} style={btnStyle} title={type}>{getIcon(type)}</button>
@@ -104,7 +113,7 @@ const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible, extraCont
   );
 };
 
-// --- 3. MAIN COMPONENT ---
+// --- 3. MAIN COMPONENT (GIỮ NGUYÊN) ---
 interface FireworksHandle { launch: (type: FireworkType) => void; triggerMix: () => void; }
 interface FireworksCanvasProps { audioEnabled: boolean; onStatusChange?: (isActive: boolean) => void; }
 
@@ -116,13 +125,12 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const audioBuffersRef = useRef<AudioBuffer[]>([]);
     const stopTimerRef = useRef<number | null>(null);
     const isActiveRef = useRef(false);
-    const autoCountRef = useRef(0); // Fix S1854: Used inside effects
+    const autoCountRef = useRef(0);
     const audioEnabledRef = useRef(audioEnabled);
 
     useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
 
     useEffect(() => {
-      // Fix S7764: Prefer globalThis
       const AC = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
       if (!AC) return;
       const ctx = new AC(); audioContextRef.current = ctx;
@@ -135,10 +143,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                 buffers.push(audioBuffer);
-            } catch (e) {
-                // Fix S2486: Handle exception
-                console.debug("Audio load error:", e);
-            }
+            } catch (e) { console.debug("Err:", e); }
         }
         audioBuffersRef.current = buffers;
       };
@@ -149,7 +154,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     useEffect(() => {
         const unlockAudio = () => {
             const ctx = audioContextRef.current;
-            // Fix S6582: Optional chain
             if (ctx?.state === "suspended") ctx.resume().catch(() => {});
         };
         globalThis.addEventListener('click', unlockAudio);
@@ -175,7 +179,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     }, []);
 
     const markActive = useCallback(() => {
-      // Fix S7764
       if (stopTimerRef.current) { globalThis.clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
       if (!isActiveRef.current) { isActiveRef.current = true; if (onStatusChange) onStatusChange(true); }
     }, [onStatusChange]);
@@ -192,14 +195,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       return { x: startX, y: h, targetY, vx: (w / 2 - startX) * 0.003 + random(-0.5, 0.5), vy: random(-11, -17), color: color, type, particles: [], exploded: false, dead: false, audioSource: audio?.source, audioGain: audio?.gainNode };
     }, [playSound]);
 
-    // Fix S3776: Cognitive Complexity
     const getParticlePhysics = (type: FireworkType, i: number, count: number) => {
         let vx = 0, vy = 0, decay = random(0.015, 0.03), gravity = 0.08, drag = 0.96;
         if (type === "star") {
-            // Fix S6133: Remove unused 'vertices'
             const baseAngle = (Math.PI * 2 / 10) * (i % 10) - (Math.PI / 2);
-            const isSpike = (i % 10) % 2 === 0; const speed = isSpike ? random(7, 8.5) : random(2, 3);
-            const finalAngle = baseAngle + random(-0.1, 0.1); vx = Math.cos(finalAngle) * speed; vy = Math.sin(finalAngle) * speed; drag = 0.95;
+            const isSpike = (i % 10) % 2 === 0; 
+            const speed = isSpike ? random(7, 8.5) : random(2, 3);
+            const finalAngle = baseAngle + random(-0.1, 0.1); 
+            vx = Math.cos(finalAngle) * speed; vy = Math.sin(finalAngle) * speed; drag = 0.95;
         } else if (type === "heart") {
             const t = (Math.PI * 2 * i) / count; const scale = 0.35;
             const xx = 16 * Math.pow(Math.sin(t), 3); const yy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
@@ -266,7 +269,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = "lighter";
 
-        // Fix S7735: Logic check
         if (fireworksRef.current.length === 0 && isActiveRef.current && !stopTimerRef.current) {
             stopTimerRef.current = globalThis.setTimeout(() => {
                 isActiveRef.current = false;
@@ -302,7 +304,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         frameId = requestAnimationFrame(loop);
       };
       loop();
-      // Fix S7762
       return () => { globalThis.removeEventListener("resize", resize); cancelAnimationFrame(frameId); };
     }, [audioEnabled, createFirework, onStatusChange]);
 

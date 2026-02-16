@@ -11,7 +11,7 @@ import React, {
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
 
 // Mốc test: 8:04 AM ngày 16/02/2026
-const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 22, 40); 
+const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 26, 0); 
 
 const FIREWORK_AUDIO_URLS = [
   "/firework.mp3",
@@ -269,7 +269,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     // --- HÀM SPAM MIX (10 lần dồn dập) ---
     const triggerSpamMix = useCallback(() => {
         // Gọi 10 lần triggerMixSequence, mỗi lần cách nhau 400ms
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 20; i++) {
             globalThis.setTimeout(() => {
                 triggerMixSequence();
             }, i * 400);

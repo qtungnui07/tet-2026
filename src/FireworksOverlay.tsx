@@ -10,6 +10,9 @@ import React, {
 // --- 1. CONFIG & DATA ---
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
 
+// Mốc test: 8:04 AM ngày 16/02/2026
+const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 19, 0); 
+
 const FIREWORK_AUDIO_URLS = [
   "/firework.mp3",
   "/firework1.mp3"
@@ -34,10 +37,14 @@ interface Firework {
   audioSource?: AudioBufferSourceNode; audioGain?: GainNode;
 }
 
-const isMainEvent = (date: Date) => {
-  const diff = date.getTime() - LUNAR_NEW_YEAR_2026.getTime();
-  return diff >= 0 && diff < 60 * 60 * 1000;
+const isShowTime = (now: Date) => {
+  const diffNewYear = now.getTime() - LUNAR_NEW_YEAR_2026.getTime();
+  const isNewYear = diffNewYear >= 0 && diffNewYear < 60 * 60 * 1000;
+  const diffTest = now.getTime() - TEST_DATE_2026.getTime();
+  const isTestTime = diffTest >= 0 && diffTest < 60 * 1000; 
+  return isNewYear || isTestTime;
 };
+
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
 // --- 2. CONTROLS COMPONENT ---
@@ -118,14 +125,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const stopTimerRef = useRef<number | null>(null);
     const isActiveRef = useRef(false);
 
-    // Dùng Ref để theo dõi trạng thái audioEnabled tránh lỗi stale closure
+    // Ref để theo dõi trạng thái audioEnabled
     const audioEnabledRef = useRef(audioEnabled);
     useEffect(() => {
         audioEnabledRef.current = audioEnabled;
     }, [audioEnabled]);
 
+    // 1. Khởi tạo AudioContext
     useEffect(() => {
-      // Fix: Prefer globalThis over window
       const AC = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
       if (!AC) return;
       
@@ -140,9 +147,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                 buffers.push(audioBuffer);
-            } catch {
-                // Ignore load errors for smoother UX
-            }
+            } catch { }
         }
         audioBuffersRef.current = buffers;
       };
@@ -151,12 +156,34 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       return () => { if (ctx.state !== "closed") ctx.close(); };
     }, []);
 
+    // 2. MỞ KHÓA AUDIO NGAY KHI CÓ CLICK (FIX LỖI MẤT TIẾNG AUTO)
+    useEffect(() => {
+        const unlockAudio = () => {
+            const ctx = audioContextRef.current;
+            if (ctx && ctx.state === "suspended") {
+                // Đây là lúc quan trọng: Mở loa ngay khi người dùng chạm vào web
+                ctx.resume().catch(() => {});
+            }
+        };
+
+        // Lắng nghe mọi cử chỉ tương tác
+        globalThis.addEventListener('click', unlockAudio);
+        globalThis.addEventListener('touchstart', unlockAudio);
+        globalThis.addEventListener('keydown', unlockAudio);
+
+        return () => {
+            globalThis.removeEventListener('click', unlockAudio);
+            globalThis.removeEventListener('touchstart', unlockAudio);
+            globalThis.removeEventListener('keydown', unlockAudio);
+        };
+    }, []);
+
     const playSound = useCallback(() => {
       const buffers = audioBuffersRef.current;
       if (!audioEnabledRef.current || !audioContextRef.current || buffers.length === 0) return;
       
       const ctx = audioContextRef.current;
-      // Fix: Use optional chaining (?.)
+      // Vẫn thử resume nếu cần, nhưng hy vọng useEffect trên đã lo rồi
       if (ctx?.state === "suspended") ctx.resume().catch(() => {});
 
       try {
@@ -171,7 +198,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     }, []);
 
     const markActive = useCallback(() => {
-      // Fix: Use globalThis.clearTimeout
       if (stopTimerRef.current) { globalThis.clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
       if (!isActiveRef.current) { isActiveRef.current = true; if (onStatusChange) onStatusChange(true); }
     }, [onStatusChange]);
@@ -192,46 +218,23 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       };
     }, [playSound]);
 
-    // --- HELPER: Tách logic vật lý để giảm độ phức tạp (Fix S3776) ---
     const calculateParticlePhysics = (type: FireworkType, i: number, count: number) => {
       let vx = 0, vy = 0, decay = random(0.015, 0.03), gravity = 0.08, drag = 0.96;
-      
       if (type === "star") {
-        const vertices = 10; 
-        const baseAngle = (Math.PI * 2 / vertices) * (i % vertices) - (Math.PI / 2);
-        const isSpike = (i % vertices) % 2 === 0; 
-        const speed = isSpike ? random(7, 8.5) : random(2, 3);
-        const finalAngle = baseAngle + random(-0.1, 0.1); 
-        vx = Math.cos(finalAngle) * speed; 
-        vy = Math.sin(finalAngle) * speed; 
-        drag = 0.95;
+        const vertices = 10; const baseAngle = (Math.PI * 2 / vertices) * (i % vertices) - (Math.PI / 2);
+        const isSpike = (i % vertices) % 2 === 0; const speed = isSpike ? random(7, 8.5) : random(2, 3);
+        const finalAngle = baseAngle + random(-0.1, 0.1); vx = Math.cos(finalAngle) * speed; vy = Math.sin(finalAngle) * speed; drag = 0.95;
       } else if (type === "heart") {
-        const t = (Math.PI * 2 * i) / count; 
-        const scale = 0.35;
-        const xx = 16 * Math.pow(Math.sin(t), 3); 
-        const yy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-        vx = xx * scale + random(-0.2, 0.2); 
-        vy = yy * scale + random(-0.2, 0.2); 
-        gravity = 0.06; 
-        decay = random(0.01, 0.02);
+        const t = (Math.PI * 2 * i) / count; const scale = 0.35;
+        const xx = 16 * Math.pow(Math.sin(t), 3); const yy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+        vx = xx * scale + random(-0.2, 0.2); vy = yy * scale + random(-0.2, 0.2); gravity = 0.06; decay = random(0.01, 0.02);
       } else if (type === "ring") {
-        const a = (Math.PI * 2 * i) / count; 
-        const s = 6; 
-        vx = Math.cos(a) * s; 
-        vy = Math.sin(a) * s;
+        const a = (Math.PI * 2 * i) / count; const s = 6; vx = Math.cos(a) * s; vy = Math.sin(a) * s;
       } else if (type === "willow") {
-        const a = random(0, Math.PI * 2); 
-        const s = random(1, 8); 
-        vx = Math.cos(a) * s; 
-        vy = Math.sin(a) * s;
-        decay = random(0.005, 0.015); 
-        gravity = 0.03; 
-        drag = 0.92; 
+        const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s;
+        decay = random(0.005, 0.015); gravity = 0.03; drag = 0.92; 
       } else {
-        const a = random(0, Math.PI * 2); 
-        const s = random(1, 8); 
-        vx = Math.cos(a) * s; 
-        vy = Math.sin(a) * s;
+        const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s;
       }
       return { vx, vy, decay, gravity, drag };
     };
@@ -240,9 +243,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       const particles: Particle[] = [];
       let count = 100;
       if (type === "willow") count = 150; else if (type === "ring") count = 60; else if (type === "star") count = 90; else if (type === "heart") count = 120;
-
-      let pColor = color;
-      if (type === "willow") pColor = "#E6BE8A";
+      let pColor = color; if (type === "willow") pColor = "#E6BE8A";
 
       for (let i = 0; i < count; i++) {
         const { vx, vy, decay, gravity, drag } = calculateParticlePhysics(type, i, count);
@@ -254,14 +255,11 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const triggerMixSequence = useCallback(() => {
         if (!canvasRef.current) return;
         
-        // Kích hoạt AudioContext ngay lập tức
-        if (audioContextRef.current?.state === "suspended") {
-            audioContextRef.current.resume().catch(() => {});
-        }
-
+        // Không gọi resume() ở đây vì nếu là auto thì nó sẽ bị chặn.
+        // Thay vào đó tin tưởng useEffect ở trên đã mở khóa loa.
+        
         const types: FireworkType[] = ["sphere", "ring", "star", "heart", "willow", "strobe"];
         types.forEach((t, i) => {
-            // Fix: Prefer globalThis.setTimeout
             globalThis.setTimeout(() => {
                 if (canvasRef.current) {
                     fireworksRef.current.push(createFirework(canvasRef.current.width, canvasRef.current.height, t));
@@ -271,11 +269,11 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         });
     }, [createFirework, markActive]);
 
-    // --- AUTO MIX 7S ---
+    // --- AUTO MIX 3S (Thay vì 7S) ---
     useEffect(() => {
         const intervalId = globalThis.setInterval(() => {
-            if (isMainEvent(new Date())) { triggerMixSequence(); }
-        }, 7000);
+            if (isShowTime(new Date())) { triggerMixSequence(); }
+        }, 2000); 
         return () => globalThis.clearInterval(intervalId);
     }, [triggerMixSequence]);
 
@@ -283,7 +281,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       const canvas = canvasRef.current; if (!canvas) return;
       const ctx = canvas.getContext("2d"); if (!ctx) return;
       let frameId: number;
-      // Fix: globalThis.innerWidth
       const resize = () => { canvas.width = globalThis.innerWidth; canvas.height = globalThis.innerHeight; };
       globalThis.addEventListener("resize", resize); resize();
 
@@ -331,7 +328,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       };
       loop();
       return () => { globalThis.removeEventListener("resize", resize); cancelAnimationFrame(frameId); };
-    }, [audioEnabled, createFirework, onStatusChange]); // Đã remove 'createParticles' khỏi deps vì nó dùng bên trong loop, không cần re-bind
+    }, [audioEnabled, createFirework, onStatusChange]);
 
     useImperativeHandle(ref, () => ({
       launch: (type: FireworkType) => {

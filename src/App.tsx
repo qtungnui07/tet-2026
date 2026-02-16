@@ -3,8 +3,8 @@ import gsap from 'gsap';
 import './App.css';
 import IntroScreen from './IntroScreen';
 import Timer from './Timer';
-import FireworksOverlay from './FireworksOverlay';
 import MusicPlayer from './MusicPlayer';
+import FireworksOverlay from './FireworksOverlay';
 
 interface SplitTextStringProps { text: string; }
 const SplitTextString = ({ text }: SplitTextStringProps) => (
@@ -26,29 +26,22 @@ function App() {
   useEffect(() => {
     if (showIntro) return;
     const ctx = gsap.context(() => {
-      gsap.from(".year .char", { 
-        y: 100, rotateX: -90, opacity: 0, duration: 1, stagger: 0.2, ease: "back.out(1.7)" 
-      });
-      gsap.from(".greeting .char", { 
-        y: 50, rotateX: -90, opacity: 0, duration: 1, stagger: 0.02, delay: 0.5, ease: "power3.out" 
-      });
-      gsap.from(".timer-container", { 
-        y: 50, opacity: 0, duration: 1, delay: 1.5, ease: "power2.out" 
-      });
+      gsap.from(".year .char", { y: 100, rotateX: -90, opacity: 0, duration: 1, stagger: 0.2, ease: "back.out(1.7)" });
+      gsap.from(".greeting .char", { y: 50, rotateX: -90, opacity: 0, duration: 1, stagger: 0.02, delay: 0.5, ease: "power3.out" });
+      gsap.from(".timer-container", { y: 50, opacity: 0, duration: 1, delay: 1.5, ease: "power2.out" });
     }, containerRef);
-
     return () => ctx.revert();
   }, [showIntro]);
 
   return (
     <>
-      <MusicPlayer visible={!showIntro} />
+      {/* TRUYỀN MUSIC PLAYER VÀO ĐỂ FIREWORKS TỰ SẮP XẾP */}
       <FireworksOverlay 
         enableControls={!showIntro} 
         onStatusChange={setIsShooting} 
+        extraContent={!showIntro ? <MusicPlayer visible={!showIntro} /> : <MusicPlayer visible={false} />}
       />
 
-      {/* Logic Class: Nếu intro tắt VÀ KHÔNG BẮN PHÁO HOA thì mới hiện background (.visible) */}
       <div className={`cny-bg ${!showIntro && !isShooting ? 'visible' : ''}`}></div>
 
       {showIntro ? (

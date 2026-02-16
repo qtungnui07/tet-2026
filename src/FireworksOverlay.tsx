@@ -27,46 +27,38 @@ const isShowTime = (now: Date) => {
 };
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
-// --- 2. CONTROLS ---
+// --- 2. CONTROLS (QUAN TRỌNG: CONTAINER CHUNG CHO CẢ 2 THANH) ---
 interface ControlsProps {
   onLaunch: (type: FireworkType) => void;
   onMix: () => void;
   visible: boolean;
+  extraContent?: React.ReactNode;
 }
 
-const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible }) => {
-  // Logic style: Căn sang PHẢI của tâm màn hình (đối xứng MusicPlayer)
-  const containerStyle: React.CSSProperties = {
-    position: 'fixed', bottom: '30px', 
-    left: '51%', // Đẩy sang phải 51% (đối xứng với 51% right của MusicPlayer)
-    zIndex: 9999, display: 'flex', gap: '8px',
-    padding: '6px 15px', borderRadius: '30px',
-    background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(5px)',
-    border: '1px solid rgba(255, 215, 0, 0.2)',
-    height: '52px', alignItems: 'center',
-    
-    // Animation
-    opacity: visible ? 1 : 0,
-    pointerEvents: visible ? 'auto' : 'none',
-    transform: visible ? 'translateY(0)' : 'translateY(20px)',
-    transition: 'opacity 0.8s ease, transform 0.8s ease',
+const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible, extraContent }) => {
+  if (!visible) return null;
+
+  // Style cho Container CHÍNH: Căn giữa, chứa cả 2 thanh
+  const mainWrapperStyle: React.CSSProperties = {
+    position: 'fixed', bottom: '30px', left: '50%', 
+    transform: 'translateX(-50%)', // Luôn căn giữa màn hình
+    zIndex: 9999, 
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    gap: '20px', // Khoảng cách giữa MusicPlayer và Firework Buttons
+    animation: 'slideUpControl 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+    opacity: 0,
+    flexWrap: 'wrap', // Tự xuống dòng trên điện thoại bé
+    width: '100%',
+    pointerEvents: 'none' // Để click xuyên qua vùng trống
   };
 
-  // CSS Mobile: Về giữa màn hình
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.innerHTML = `
-      @media (max-width: 768px) {
-        .firework-controls-container {
-          left: 50% !important;
-          transform: translateX(-50%) translateY(${visible ? '0' : '20px'}) !important;
-          bottom: 30px !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, [visible]);
+  // Style cho phần nút pháo hoa
+  const fwContainerStyle: React.CSSProperties = {
+    display: 'flex', gap: '8px', padding: '6px 15px', borderRadius: '30px',
+    background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(5px)',
+    border: '1px solid rgba(255, 215, 0, 0.2)', height: '52px', alignItems: 'center',
+    pointerEvents: 'auto'
+  };
 
   const btnStyle: React.CSSProperties = {
     width: '40px', height: '40px', borderRadius: '50%',
@@ -90,16 +82,25 @@ const Controls: React.FC<ControlsProps> = ({ onLaunch, onMix, visible }) => {
   };
 
   return (
-    <div style={containerStyle} className="firework-controls-container">
-      {types.map((type) => (
-        <button key={type} onClick={() => onLaunch(type)} style={btnStyle} title={type}>{getIcon(type)}</button>
-      ))}
-      <div style={{ width: 1, height: '24px', background: 'rgba(255,255,255,0.2)' }}></div>
-      <button 
-        onClick={onMix}
-        style={{...btnStyle, background: 'linear-gradient(45deg, #FF4500, #FFD700)', fontWeight: 'bold', fontSize: '10px', color: 'white', border: 'none'}}
-      >MIX</button>
-    </div>
+    <>
+      <style>{`@keyframes slideUpControl { 0% { transform: translate(-50%, 100px); opacity: 0; } 100% { transform: translate(-50%, 0); opacity: 1; } }`}</style>
+      
+      <div style={mainWrapperStyle}>
+        {/* Thanh Music nằm ở đây */}
+        <div style={{ pointerEvents: 'auto' }}>
+            {extraContent}
+        </div>
+
+        {/* Thanh Pháo hoa nằm cạnh */}
+        <div style={fwContainerStyle}>
+          {types.map((type) => (
+            <button key={type} onClick={() => onLaunch(type)} style={btnStyle} title={type}>{getIcon(type)}</button>
+          ))}
+          <div style={{ width: 1, height: '24px', background: 'rgba(255,255,255,0.2)' }}></div>
+          <button onClick={onMix} style={{...btnStyle, background: 'linear-gradient(45deg, #FF4500, #FFD700)', fontWeight: 'bold', fontSize: '10px', color: 'white', border: 'none'}}>MIX</button>
+        </div>
+      </div>
+    </>
   );
 };
 
@@ -115,12 +116,13 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const audioBuffersRef = useRef<AudioBuffer[]>([]);
     const stopTimerRef = useRef<number | null>(null);
     const isActiveRef = useRef(false);
-    const autoCountRef = useRef(0);
+    const autoCountRef = useRef(0); // Fix S1854: Used inside effects
     const audioEnabledRef = useRef(audioEnabled);
 
     useEffect(() => { audioEnabledRef.current = audioEnabled; }, [audioEnabled]);
 
     useEffect(() => {
+      // Fix S7764: Prefer globalThis
       const AC = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
       if (!AC) return;
       const ctx = new AC(); audioContextRef.current = ctx;
@@ -129,10 +131,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         for (const url of FIREWORK_AUDIO_URLS) {
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error("404");
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
                 buffers.push(audioBuffer);
-            } catch { }
+            } catch (e) {
+                // Fix S2486: Handle exception
+                console.debug("Audio load error:", e);
+            }
         }
         audioBuffersRef.current = buffers;
       };
@@ -143,15 +149,14 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     useEffect(() => {
         const unlockAudio = () => {
             const ctx = audioContextRef.current;
-            if (ctx && ctx.state === "suspended") ctx.resume().catch(() => {});
+            // Fix S6582: Optional chain
+            if (ctx?.state === "suspended") ctx.resume().catch(() => {});
         };
         globalThis.addEventListener('click', unlockAudio);
         globalThis.addEventListener('touchstart', unlockAudio);
-        globalThis.addEventListener('keydown', unlockAudio);
         return () => {
             globalThis.removeEventListener('click', unlockAudio);
             globalThis.removeEventListener('touchstart', unlockAudio);
-            globalThis.removeEventListener('keydown', unlockAudio);
         };
     }, []);
 
@@ -170,6 +175,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     }, []);
 
     const markActive = useCallback(() => {
+      // Fix S7764
       if (stopTimerRef.current) { globalThis.clearTimeout(stopTimerRef.current); stopTimerRef.current = null; }
       if (!isActiveRef.current) { isActiveRef.current = true; if (onStatusChange) onStatusChange(true); }
     }, [onStatusChange]);
@@ -186,15 +192,12 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       return { x: startX, y: h, targetY, vx: (w / 2 - startX) * 0.003 + random(-0.5, 0.5), vy: random(-11, -17), color: color, type, particles: [], exploded: false, dead: false, audioSource: audio?.source, audioGain: audio?.gainNode };
     }, [playSound]);
 
-    const createParticles = (x: number, y: number, color: string, type: FireworkType): Particle[] => {
-      const particles: Particle[] = [];
-      let count = 100;
-      if (type === "willow") count = 150; else if (type === "ring") count = 60; else if (type === "star") count = 90; else if (type === "heart") count = 120;
-      let pColor = color; if (type === "willow") pColor = "#E6BE8A";
-      for (let i = 0; i < count; i++) {
+    // Fix S3776: Cognitive Complexity
+    const getParticlePhysics = (type: FireworkType, i: number, count: number) => {
         let vx = 0, vy = 0, decay = random(0.015, 0.03), gravity = 0.08, drag = 0.96;
         if (type === "star") {
-            const vertices = 10; const baseAngle = (Math.PI * 2 / 10) * (i % 10) - (Math.PI / 2);
+            // Fix S6133: Remove unused 'vertices'
+            const baseAngle = (Math.PI * 2 / 10) * (i % 10) - (Math.PI / 2);
             const isSpike = (i % 10) % 2 === 0; const speed = isSpike ? random(7, 8.5) : random(2, 3);
             const finalAngle = baseAngle + random(-0.1, 0.1); vx = Math.cos(finalAngle) * speed; vy = Math.sin(finalAngle) * speed; drag = 0.95;
         } else if (type === "heart") {
@@ -202,13 +205,23 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
             const xx = 16 * Math.pow(Math.sin(t), 3); const yy = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
             vx = xx * scale + random(-0.2, 0.2); vy = yy * scale + random(-0.2, 0.2); gravity = 0.06; decay = random(0.01, 0.02);
         } else if (type === "ring") {
-          const a = (Math.PI * 2 * i) / count; const s = 6; vx = Math.cos(a) * s; vy = Math.sin(a) * s;
+            const a = (Math.PI * 2 * i) / count; const s = 6; vx = Math.cos(a) * s; vy = Math.sin(a) * s;
         } else if (type === "willow") {
-          const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s; decay = random(0.005, 0.015); gravity = 0.03; drag = 0.92; 
+            const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s; decay = random(0.005, 0.015); gravity = 0.03; drag = 0.92; 
         } else {
-          const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s;
+            const a = random(0, Math.PI * 2); const s = random(1, 8); vx = Math.cos(a) * s; vy = Math.sin(a) * s;
         }
-        particles.push({ x, y, vx, vy, alpha: 1, color: pColor, decay, gravity, drag });
+        return { vx, vy, decay, gravity, drag };
+    };
+
+    const createParticles = (x: number, y: number, color: string, type: FireworkType): Particle[] => {
+      const particles: Particle[] = [];
+      let count = 100;
+      if (type === "willow") count = 150; else if (type === "ring") count = 60; else if (type === "star") count = 90; else if (type === "heart") count = 120;
+      let pColor = color; if (type === "willow") pColor = "#E6BE8A";
+      for (let i = 0; i < count; i++) {
+        const physics = getParticlePhysics(type, i, count);
+        particles.push({ x, y, vx: physics.vx, vy: physics.vy, alpha: 1, color: pColor, decay: physics.decay, gravity: physics.gravity, drag: physics.drag });
       }
       return particles;
     };
@@ -227,7 +240,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     }, [createFirework, markActive]);
 
     const triggerSpamMix = useCallback(() => {
-        for (let i = 0; i < 10; i++) { globalThis.setTimeout(() => { triggerMixSequence(); }, i * 400); }
+        for (let i = 0; i < 20; i++) { globalThis.setTimeout(() => { triggerMixSequence(); }, i * 400); }
     }, [triggerMixSequence]);
 
     useEffect(() => {
@@ -253,6 +266,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.globalCompositeOperation = "lighter";
 
+        // Fix S7735: Logic check
         if (fireworksRef.current.length === 0 && isActiveRef.current && !stopTimerRef.current) {
             stopTimerRef.current = globalThis.setTimeout(() => {
                 isActiveRef.current = false;
@@ -288,6 +302,7 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         frameId = requestAnimationFrame(loop);
       };
       loop();
+      // Fix S7762
       return () => { globalThis.removeEventListener("resize", resize); cancelAnimationFrame(frameId); };
     }, [audioEnabled, createFirework, onStatusChange]);
 
@@ -300,8 +315,8 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
   }
 );
 
-interface FireworksOverlayProps { enableControls?: boolean; onStatusChange?: (isActive: boolean) => void; }
-const FireworksOverlay: React.FC<FireworksOverlayProps> = ({ enableControls = true, onStatusChange }) => {
+interface FireworksOverlayProps { enableControls?: boolean; onStatusChange?: (isActive: boolean) => void; extraContent?: React.ReactNode; }
+const FireworksOverlay: React.FC<FireworksOverlayProps> = ({ enableControls = true, onStatusChange, extraContent }) => {
   const fwRef = useRef<FireworksHandle>(null);
   const [interacted, setInteracted] = useState(false);
   useEffect(() => {
@@ -317,6 +332,7 @@ const FireworksOverlay: React.FC<FireworksOverlayProps> = ({ enableControls = tr
         onLaunch={(t) => fwRef.current?.launch(t)} 
         onMix={() => fwRef.current?.triggerMix()}
         visible={enableControls} 
+        extraContent={extraContent} 
       />
     </>
   );

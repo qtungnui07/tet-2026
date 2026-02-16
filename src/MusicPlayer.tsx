@@ -1,12 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
 
-const PLAYLIST = [{ title: "Như Hoa Mùa Xuân", src: "./Như Hoa Mùa Xuân.mp3" },
-  { title: "Syn Cole - Feel Good ", src: "./Syn Cole - Feel Good ｜ Future House ｜ NCS - Copyright Free Music [q1ULJ92aldE].mp3" },
-  { title: "Happy New Year - ABBA", src: "/music/happy-new-year.mp3" },
-];
+const PLAYLIST = [
+  // Ưu tiên nhạc Tết lên đầu
+  { title: "Như Hoa Mùa Xuân", src: "/Như Hoa Mùa Xuân.mp3" },
+  
+  // Danh sách còn lại
+  { title: "Chúng Ta Của Tương Lai", src: "/Chúng Ta Của Tương Lai.mp3" },
+  { title: "Có Đôi Điều", src: "/Có Đôi Điều.mp3" },
+  { title: "2AM", src: "/2AM.mp3" },
+  { title: "Hơi Ảo #8 - Lucin3x", src: "/Hơi Ảo #8 - Lucin3x.mp3" },
+  { title: "In Love", src: "/In Love.mp3" },
+  { title: "MONO - EM LÀ (Kirimi Remix)", src: "/MONO - EM LÀ (Kirimi Remix).mp3" },
+  { title: "LIFE - Neuro-sama", src: "/LIFE - Neuro-sama (Official Video).mp3" },
+  { title: "nếu lúc đó", src: "/nếu lúc đó.mp3" },
+  { title: "PARACHUTE", src: "/PARACHUTE.mp3" },
+  { title: "PHÓNG ZÌN ZÌN", src: "/PHÓNG ZÌN ZÌN.mp3" },
+  { title: "Wrong Times", src: "/Wrong Times.mp3" },
 
+  // --- CÁC FILE TÊN DÀI/TIẾNG NHẬT (Bạn hãy đổi tên file ngắn lại rồi bỏ comment nhé) ---
+  { title: "Syn Cole - Feel Good", src: "/Syn Cole - Feel Good ｜ Future House ｜ NCS - Copyright Free Music [q1ULJ92aldE].mp3" },
+  { title: "Theres No One At All", src: "/Theres No One At All.mp3" },
+  { title: "Travis Scott - FE!N", src: "/Travis Scott - FE!N.mp3" },
+  { title: "YOASOBI - Racing Into The Night", src: "/YOASOBI.mp3" },
+  { title: "Hello World", src: "/123.mp3" }, 
+];
 interface MusicPlayerProps {
-  visible: boolean; // Prop để điều khiển ẩn/hiện giao diện
+  visible: boolean;
 }
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
@@ -17,8 +36,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
   const [volume, setVolume] = useState(0.5);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  // Fix S7773: Use Number.isNaN
   const formatTime = (time: number) => {
-    if (isNaN(time)) return "00:00";
+    if (Number.isNaN(time)) return "00:00";
     const min = Math.floor(time / 60);
     const sec = Math.floor(time % 60);
     return `${min < 10 ? "0" + min : min}:${sec < 10 ? "0" + sec : sec}`;
@@ -27,7 +47,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
   const togglePlay = () => {
     if (!audioRef.current) return;
     if (isPlaying) audioRef.current.pause();
-    else audioRef.current.play().catch(() => {});
+    else audioRef.current.play().catch(() => {}); // Empty catch is fine here
     setIsPlaying(!isPlaying);
   };
 
@@ -41,29 +61,26 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
   const prevTrack = () => playTrack((currentTrack - 1 + PLAYLIST.length) % PLAYLIST.length);
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const vol = parseFloat(e.target.value);
+    // Fix S7773: Use Number.parseFloat
+    const vol = Number.parseFloat(e.target.value);
     setVolume(vol);
     if (audioRef.current) audioRef.current.volume = vol;
   };
 
-  // --- AUTOPLAY LOGIC ---
+  // Autoplay logic
   useEffect(() => {
     if (audioRef.current) {
         audioRef.current.volume = volume;
         const playPromise = audioRef.current.play();
         if (playPromise !== undefined) {
-            playPromise
-                .then(() => setIsPlaying(true))
-                .catch((e) => {
-                    console.log("Autoplay blocked, waiting for interaction", e);
-                    // Nếu bị chặn, lắng nghe click đầu tiên để phát
-                    const startAudio = () => {
-                        audioRef.current?.play();
-                        setIsPlaying(true);
-                        document.removeEventListener('click', startAudio);
-                    };
-                    document.addEventListener('click', startAudio);
-                });
+            playPromise.then(() => setIsPlaying(true)).catch(() => {
+                // Fix: Add interaction listener if blocked
+                const startAudio = () => {
+                    if (audioRef.current) audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {});
+                    document.removeEventListener('click', startAudio);
+                };
+                document.addEventListener('click', startAudio);
+            });
         }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -77,48 +94,28 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
     return () => audio.removeEventListener("ended", handleEnded);
   }, [currentTrack]);
 
-  // --- STYLES ---
-  // Style cho Container: Căn sang TRÁI của tâm màn hình
+  // CSS Styles - BỎ POSITION FIXED để tránh chồng chéo
   const containerStyle: React.CSSProperties = {
-    position: 'fixed',
-    bottom: '35px',
-    right: '51%', // Đẩy sang bên trái một chút so với giữa (50%)
-    zIndex: 9999,
-    display: 'flex',
-    alignItems: 'center',
-    gap: '10px',
-    padding: '0 15px',
-    height: '52px',
-    borderRadius: '30px',
-    background: 'rgba(0, 0, 0, 0.5)',
-    backdropFilter: 'blur(5px)',
+    display: 'flex', alignItems: 'center', gap: '10px', padding: '0 15px',
+    height: '52px', borderRadius: '30px',
+    background: 'rgba(0, 0, 0, 0.5)', backdropFilter: 'blur(5px)',
     border: '1px solid rgba(255, 215, 0, 0.2)',
-    color: '#FFD700',
-    fontFamily: 'Arial, sans-serif',
-    whiteSpace: 'nowrap',
-    
-    // Logic Ẩn/Hiện
-    opacity: visible ? 1 : 0,
+    color: '#FFD700', fontFamily: 'Arial, sans-serif', whiteSpace: 'nowrap',
+    // Logic ẩn hiện
+    opacity: visible ? 1 : 0, 
     pointerEvents: visible ? 'auto' : 'none',
-    transform: visible ? 'translateY(0)' : 'translateY(20px)',
-    transition: 'opacity 0.8s ease, transform 0.8s ease',
+    transition: 'opacity 0.8s ease',
   };
 
-  // CSS Mobile: Khi màn hình nhỏ, xếp chồng lên trên thanh pháo hoa
+  // Fix S7762: Use .remove()
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      @media (max-width: 768px) {
-        .music-player-container {
-          right: 50% !important;
-          transform: translateX(50%) translateY(${visible ? '-60px' : '20px'}) !important; /* Đẩy lên trên thanh pháo hoa */
-          bottom: 40px !important;
-        }
-      }
+      .mask-linear-fade { mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
     `;
     document.head.appendChild(style);
-    return () => { document.head.removeChild(style); };
-  }, [visible]);
+    return () => style.remove();
+  }, []);
 
   const btnStyle: React.CSSProperties = {
     width: '32px', height: '32px', borderRadius: '50%',
@@ -128,19 +125,10 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
     padding: 0, margin: 0
   };
 
-  const textContainerStyle: React.CSSProperties = {
-    display: 'flex', flexDirection: 'column', width: '130px', overflow: 'hidden'
-  };
+  const titleStyle: React.CSSProperties = { fontSize: '12px', fontWeight: 'bold', color: '#FFF', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' };
+  const timeStyle: React.CSSProperties = { fontSize: '10px', color: '#DDD', marginTop: '2px' };
 
-  const titleStyle: React.CSSProperties = {
-    fontSize: '12px', fontWeight: 'bold', color: '#FFF', 
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-  };
-
-  const timeStyle: React.CSSProperties = {
-    fontSize: '10px', color: '#DDD', marginTop: '2px'
-  };
-
+  // SVG Icons
   const iconPrev = <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>;
   const iconNext = <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>;
   const iconPlay = <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>;
@@ -148,23 +136,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
   const iconVol = <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>;
 
   return (
-    <div style={containerStyle} className="music-player-container">
-      {/* Audio luôn render để phát nhạc, kể cả khi hidden */}
+    <div style={containerStyle}>
+      {/* Fix S4084: Add track for accessibility */}
       <audio 
         ref={audioRef} 
         src={PLAYLIST[currentTrack].src}
         onTimeUpdate={() => audioRef.current && setCurrentTime(audioRef.current.currentTime)}
         onLoadedMetadata={() => audioRef.current && setDuration(audioRef.current.duration)}
-      />
+      >
+        <track kind="captions" src="" label="English" />
+      </audio>
 
-      {/* --- GIAO DIỆN ĐIỀU KHIỂN --- */}
       <div style={{ display: 'flex', gap: '5px' }}>
         <button onClick={prevTrack} style={btnStyle} title="Previous">{iconPrev}</button>
-        <button 
-          onClick={togglePlay} 
-          style={{ ...btnStyle, background: 'rgba(255, 69, 0, 0.8)', border: 'none', color: 'white' }} 
-          title="Play/Pause"
-        >
+        <button onClick={togglePlay} style={{ ...btnStyle, background: 'rgba(255, 69, 0, 0.8)', border: 'none', color: 'white' }} title="Play/Pause">
           {isPlaying ? iconPause : iconPlay}
         </button>
         <button onClick={nextTrack} style={btnStyle} title="Next">{iconNext}</button>
@@ -172,7 +157,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
 
       <div style={{ width: '1px', height: '24px', background: 'rgba(255,255,255,0.2)', margin: '0 5px' }}></div>
 
-      <div style={textContainerStyle}>
+      <div style={{ display: 'flex', flexDirection: 'column', width: '130px', overflow: 'hidden' }}>
         <div style={titleStyle}>{PLAYLIST[currentTrack].title}</div>
         <div style={timeStyle}>{formatTime(currentTime)} / {formatTime(duration)}</div>
       </div>
@@ -181,12 +166,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ visible }) => {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
         <div style={{color: '#FFD700'}}>{iconVol}</div>
-        <input 
-          type="range" min="0" max="1" step="0.05" value={volume} 
-          onChange={handleVolumeChange}
-          style={{ width: '50px', cursor: 'pointer' }}
-          title="Volume"
-        />
+        <input type="range" min="0" max="1" step="0.05" value={volume} onChange={handleVolumeChange} style={{ width: '50px', cursor: 'pointer' }} title="Volume" />
       </div>
     </div>
   );

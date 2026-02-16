@@ -11,7 +11,7 @@ import React, {
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
 
 // Mốc test: 8:04 AM ngày 16/02/2026
-const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 43, 0); 
+const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 44, 0); 
 
 const FIREWORK_AUDIO_URLS = [
   "/firework.mp3",

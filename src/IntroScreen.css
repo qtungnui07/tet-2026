@@ -94,43 +94,53 @@
     transform: scale(0.9);
   }
 }
-
 @media (max-width: 768px) {
   .intro-content {
     transform: scale(1);
-    gap: 1rem;
+    /* Tăng khoảng cách giữa 2 dòng lớn để chữ không dính nhau */
+    gap: -15rem; 
     margin-top: -10vh;
   }
 
   .big-text {
-    font-size: 19vw;
+    font-size: 18vw; /* Chữ to theo chiều ngang màn hình */
     line-height: 1;
     letter-spacing: -1px;
   }
 
   .small-text-wrapper {
-    font-size: 1rem;
+    font-size: 1.2rem; /* Kích thước chữ nhỏ */
   }
 
+  /* --- CỤM 1: 'về nhà' --- */
   .pos-1 {
-    top: 2.5rem;
-    left: 05%;
-    transform: rotate(-5deg);
-    text-align: left;
+    /* Đẩy lên trên cao (số âm càng lớn càng lên cao) */
+    top: -3.5rem !important; 
+    
+    /* Căn lề trái */
+    left: 0 !important;      
+    
     width: auto;
+    text-align: left;
+    transform: rotate(-5deg);
+  }
+
+  /* --- CỤM 2: 'gạt hết đi' --- */
+  .pos-2 {
+    /* Đẩy xuống dưới thấp (số âm càng lớn càng xuống thấp) */
+    bottom: -3.5rem !important; 
+    
+    /* Căn lề phải */
+    left: auto !important;
+    right: 0 !important;     
+    
+    width: auto;
+    text-align: right;
+    transform: rotate(5deg);
   }
 
   .row-2 {
     margin-left: 0;
     margin-top: 0;
-  }
-
-  .pos-2 {
-    left: auto;
-    right: 10%;
-    bottom: 2rem;
-    text-align: right;
-    transform: rotate(5deg);
-    width: auto;
   }
 }

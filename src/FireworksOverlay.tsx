@@ -11,7 +11,7 @@ import React, {
 const LUNAR_NEW_YEAR_2026 = new Date("2026-02-17T00:00:00");
 
 // Mốc test: 8:04 AM ngày 16/02/2026
-const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 19, 0); 
+const TEST_DATE_2026 = new Date(2026, 1, 16, 17, 22, 40); 
 
 const FIREWORK_AUDIO_URLS = [
   "/firework.mp3",
@@ -39,9 +39,14 @@ interface Firework {
 
 const isShowTime = (now: Date) => {
   const diffNewYear = now.getTime() - LUNAR_NEW_YEAR_2026.getTime();
-  const isNewYear = diffNewYear >= 0 && diffNewYear < 60 * 60 * 1000;
+  
+  // --- CẬP NHẬT: CHỈ KÉO DÀI 30 PHÚT (30 * 60 * 1000) ---
+  const isNewYear = diffNewYear >= 0 && diffNewYear < 30 * 60 * 1000;
+
+  // Giờ test (8:04 - 8:05 ngày 16/02)
   const diffTest = now.getTime() - TEST_DATE_2026.getTime();
   const isTestTime = diffTest >= 0 && diffTest < 60 * 1000; 
+
   return isNewYear || isTestTime;
 };
 
@@ -124,14 +129,15 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const audioBuffersRef = useRef<AudioBuffer[]>([]);
     const stopTimerRef = useRef<number | null>(null);
     const isActiveRef = useRef(false);
+    
+    // --- BIẾN ĐẾM SỐ LẦN BẮN ---
+    const autoCountRef = useRef(0);
 
-    // Ref để theo dõi trạng thái audioEnabled
     const audioEnabledRef = useRef(audioEnabled);
     useEffect(() => {
         audioEnabledRef.current = audioEnabled;
     }, [audioEnabled]);
 
-    // 1. Khởi tạo AudioContext
     useEffect(() => {
       const AC = globalThis.AudioContext || (globalThis as any).webkitAudioContext;
       if (!AC) return;
@@ -156,21 +162,16 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       return () => { if (ctx.state !== "closed") ctx.close(); };
     }, []);
 
-    // 2. MỞ KHÓA AUDIO NGAY KHI CÓ CLICK (FIX LỖI MẤT TIẾNG AUTO)
     useEffect(() => {
         const unlockAudio = () => {
             const ctx = audioContextRef.current;
             if (ctx && ctx.state === "suspended") {
-                // Đây là lúc quan trọng: Mở loa ngay khi người dùng chạm vào web
                 ctx.resume().catch(() => {});
             }
         };
-
-        // Lắng nghe mọi cử chỉ tương tác
         globalThis.addEventListener('click', unlockAudio);
         globalThis.addEventListener('touchstart', unlockAudio);
         globalThis.addEventListener('keydown', unlockAudio);
-
         return () => {
             globalThis.removeEventListener('click', unlockAudio);
             globalThis.removeEventListener('touchstart', unlockAudio);
@@ -183,7 +184,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
       if (!audioEnabledRef.current || !audioContextRef.current || buffers.length === 0) return;
       
       const ctx = audioContextRef.current;
-      // Vẫn thử resume nếu cần, nhưng hy vọng useEffect trên đã lo rồi
       if (ctx?.state === "suspended") ctx.resume().catch(() => {});
 
       try {
@@ -255,9 +255,6 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
     const triggerMixSequence = useCallback(() => {
         if (!canvasRef.current) return;
         
-        // Không gọi resume() ở đây vì nếu là auto thì nó sẽ bị chặn.
-        // Thay vào đó tin tưởng useEffect ở trên đã mở khóa loa.
-        
         const types: FireworkType[] = ["sphere", "ring", "star", "heart", "willow", "strobe"];
         types.forEach((t, i) => {
             globalThis.setTimeout(() => {
@@ -269,13 +266,33 @@ const FireworksCanvas = forwardRef<FireworksHandle, FireworksCanvasProps>(
         });
     }, [createFirework, markActive]);
 
-    // --- AUTO MIX 3S (Thay vì 7S) ---
+    // --- HÀM SPAM MIX (10 lần dồn dập) ---
+    const triggerSpamMix = useCallback(() => {
+        // Gọi 10 lần triggerMixSequence, mỗi lần cách nhau 400ms
+        for (let i = 0; i < 10; i++) {
+            globalThis.setTimeout(() => {
+                triggerMixSequence();
+            }, i * 400);
+        }
+    }, [triggerMixSequence]);
+
+    // --- LOGIC AUTO: 2S/lần, cứ 10 lần thì SPAM ---
     useEffect(() => {
         const intervalId = globalThis.setInterval(() => {
-            if (isShowTime(new Date())) { triggerMixSequence(); }
-        }, 2000); 
+            if (isShowTime(new Date())) { 
+                autoCountRef.current += 1; // Tăng biến đếm
+
+                // Nếu đếm đủ 10, 20, 30... thì SPAM
+                if (autoCountRef.current % 10 === 0) {
+                    triggerSpamMix();
+                } else {
+                    // Bình thường thì bắn Mix nhẹ nhàng
+                    triggerMixSequence(); 
+                }
+            }
+        }, 2000); // 2s một nhịp
         return () => globalThis.clearInterval(intervalId);
-    }, [triggerMixSequence]);
+    }, [triggerMixSequence, triggerSpamMix]);
 
     useEffect(() => {
       const canvas = canvasRef.current; if (!canvas) return;

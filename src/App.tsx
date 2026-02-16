@@ -4,6 +4,7 @@ import './App.css';
 import IntroScreen from './IntroScreen';
 import Timer from './Timer';
 import FireworksOverlay from './FireworksOverlay';
+import MusicPlayer from './MusicPlayer';
 
 interface SplitTextStringProps { text: string; }
 const SplitTextString = ({ text }: SplitTextStringProps) => (
@@ -41,7 +42,11 @@ function App() {
 
   return (
     <>
-      <FireworksOverlay enableControls={!showIntro} onStatusChange={setIsShooting} />
+      <MusicPlayer visible={!showIntro} />
+      <FireworksOverlay 
+        enableControls={!showIntro} 
+        onStatusChange={setIsShooting} 
+      />
 
       {/* Logic Class: Nếu intro tắt VÀ KHÔNG BẮN PHÁO HOA thì mới hiện background (.visible) */}
       <div className={`cny-bg ${!showIntro && !isShooting ? 'visible' : ''}`}></div>
